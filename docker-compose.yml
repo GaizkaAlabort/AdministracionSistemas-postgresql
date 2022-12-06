@@ -1,0 +1,39 @@
+services:
+
+  servidor-db:
+    env_file: .env
+    image: postgres 
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./db/inicializar.sql:/docker-entrypoint-initdb.d/inicializar.sql
+
+  servidor-app:
+    build: ./python/
+    command: sh -c "sleep 10s ; python3 ./app.py"
+    depends_on:
+      - servidor-db
+  
+  servidor-web:
+    build: ./web/
+    ports:
+      - 81:80
+    depends_on:
+      - servidor-db
+    volumes:
+      - ./web/html:/var/www/html
+  
+  pgadmin:
+    env_file: .env
+    image: dpage/pgadmin4
+    ports:
+      - 80:80
+    depends_on:
+      - servidor-db
+
+volumes:
+  html: {}
+  db:
+    driver: local
